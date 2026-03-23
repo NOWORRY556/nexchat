@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NexChat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">N</div>
+        <h1>NexChat</h1>
+        <p>The chat app that does more</p>
+      </div>
+      <input id="usernameInput" type="text" placeholder="Enter your name..." maxlength="20" />
+      <button onclick="joinApp()">Join Now</button>
+    </div>
+  </div>
+
+  <!-- INCOMING CALL MODAL -->
+  <div id="incomingCallModal" class="modal-overlay hidden">
+    <div class="incoming-call-card">
+      <div class="ic-avatar" id="icAvatar">RK</div>
+      <div class="ic-name" id="icName">Calling...</div>
+      <div class="ic-type" id="icType">Voice call</div>
+      <div class="ic-actions">
+        <button class="ic-reject" onclick="rejectCall()">&#x2715; Decline</button>
+        <button class="ic-accept" onclick="acceptCall()">&#x2713; Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE CALL MODAL -->
+  <div id="scheduleModal" class="modal-overlay hidden">
+    <div class="schedule-card">
+      <h3>Schedule a call</h3>
+      <p id="scheduleWith">with...</p>
+      <input type="datetime-local" id="scheduleTime" />
+      <input type="text" id="scheduleMessage" placeholder="Add a note..." />
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button onclick="confirmSchedule()" style="flex:1;background:#1D9E75;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:14px;">Schedule</button>
+        <button onclick="closeScheduleModal()" style="flex:1;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" class="app hidden">
+
+    <!-- ICON BAR -->
+    <div class="iconbar">
+      <div class="logo-dot">N</div>
+      <div class="icon-nav">
+        <div class="ib active" onclick="switchTab('chat')" id="tab-chat" title="Chats">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M3 3h14v11H11l-3 3v-3H3V3z" fill="currentColor"/></svg>
+        </div>
+        <div class="ib" onclick="switchTab('calls')" id="tab-calls" title="Call History">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M4 3h3l1.5 4L7 8.5c1 2 3 4 5 5L13.5 12l4 1.5V17c0 1-1 1.5-2 1C6 16 2 9 2 5c0-1 .5-2 2-2z" fill="currentColor"/></svg>
+        </div>
+        <div class="ib" onclick="switchTab('whiteboard')" id="tab-whiteboard" title="Whiteboard">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 11l3-4 3 3 3-4 2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="user-self-avatar" id="selfAvatarIcon">?</div>
+    </div>
+
+    <!-- CONTACTS SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-top">
+        <div class="sb-header">
+          <span class="sb-title">NexChat</span>
+          <div class="focus-selector">
+            <select id="focusSelect" onchange="setFocus(this.value)">
+              <option value="online">🟢 Online</option>
+              <option value="coding">💻 Coding</option>
+              <option value="meeting">📅 In meeting</option>
+              <option value="dnd">🔴 Do not disturb</option>
+              <option value="away">🌙 Away</option>
+            </select>
+          </div>
+        </div>
+        <div class="sb-search">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="#888" stroke-width="1.5"/><path d="M11 11l3 3" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" placeholder="Search users..." id="searchInput" oninput="filterUsers()" />
+        </div>
+      </div>
+      <div class="user-list" id="userList">
+        <div class="no-users">Waiting for others to join...</div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <!-- CHAT TAB -->
+      <div id="panelChat" class="panel active">
+        <div class="chat-top" id="chatTop">
+          <div class="ct-placeholder">
+            <div class="ct-ph-icon">💬</div>
+            <p>Select a user to start chatting</p>
+          </div>
+        </div>
+        <div class="chat-area" id="chatArea">
+          <div class="welcome-msg">Select a contact on the left to begin</div>
+        </div>
+        <div class="chat-bottom" id="chatBottom" style="display:none;">
+          <div class="typing-indicator hidden" id="typingIndicator">typing...</div>
+          <div class="feature-pills">
+            <div class="pill" id="pillScreen" onclick="toggleScreenShare()" title="Screen share">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Screen share
+            </div>
+            <div class="pill" id="pillCaptions" onclick="toggleCaptions()" title="Live captions">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M4 8h8M4 11h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Captions
+            </div>
+            <div class="pill" id="pillSchedule" onclick="openScheduleModal()" title="Schedule call">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v3M11 1v3M2 7h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Schedule
+            </div>
+          </div>
+          <div class="input-row">
+            <input type="text" id="msgInput" placeholder="Type a message..." onkeypress="handleKey(event)" oninput="handleTyping()" />
+            <button class="send-btn" onclick="sendMessage()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l12-6-6 12-2-4-4-2z" fill="#fff"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALLS TAB -->
+      <div id="panelCalls" class="panel">
+        <div class="panel-header">Call History</div>
+        <div class="call-history" id="callHistory">
+          <div class="ch-empty">No calls yet. Make your first call!</div>
+        </div>
+      </div>
+
+      <!-- WHITEBOARD TAB -->
+      <div id="panelWhiteboard" class="panel">
+        <div class="panel-header">
+          Collaborative Whiteboard
+          <div class="wb-controls">
+            <input type="color" id="wbColor" value="#1D9E75" title="Pick color" />
+            <input type="range" id="wbSize" min="1" max="20" value="4" title="Brush size" />
+            <button onclick="clearWhiteboard()">Clear</button>
+            <button onclick="downloadWhiteboard()">Download</button>
+          </div>
+        </div>
+        <canvas id="whiteboardCanvas"></canvas>
+        <div class="wb-hint">Draw with your mouse. Syncs live to your chat partner.</div>
+      </div>
+
+    </div>
+
+    <!-- CALL OVERLAY -->
+    <div id="callOverlay" class="call-overlay hidden">
+      <div class="call-screen">
+        <div class="call-header">
+          <span id="callStatusText">Calling...</span>
+          <div class="call-timer hidden" id="callTimer">00:00</div>
+        </div>
+        <div class="video-area" id="videoArea">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <video id="localVideo" autoplay playsinline muted></video>
+          <div class="screen-share-banner hidden" id="screenBanner">Screen sharing active</div>
+          <div class="captions-box hidden" id="captionsBox"><span id="captionText"></span></div>
+        </div>
+        <div class="voice-area hidden" id="voiceArea">
+          <div class="voice-avatar" id="voiceAvatar">?</div>
+          <div class="voice-name" id="voiceName">Calling...</div>
+          <div class="voice-status" id="voiceStatus">Connecting...</div>
+          <div class="call-timer-big" id="callTimerBig">00:00</div>
+        </div>
+        <div class="call-controls">
+          <div class="ctrl-group">
+            <button class="cc-btn" id="btnMute" onclick="toggleMute()" title="Mute">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="6" y="1" width="8" height="11" rx="4" fill="currentColor"/><path d="M3 10a7 7 0 0014 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="17" x2="10" y2="20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <span class="cc-label">Mute</span>
+          </div>
+          <div class="ctrl-group">
+            <button class="cc-btn" id="btnCamera" onclick="toggleCamera()" title="Camera">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="1" y="5" width="12" height="10" rx="2" fill="currentColor"/><path d="M13 9l5-3v8l-5-3V9z" fill="currentColor"/></svg>
+            </button>
+            <span class="cc-label">Camera</span>
+          </div>
+          <div class="ctrl-group">
+            <button class="cc-btn" id="btnScreen" onclick="toggleScreenShare()" title="Screen share">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="1" y="2" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 18h6M10 15v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </button>
+            <span class="cc-label">Share</span>
+          </div>
+          <div class="ctrl-group">
+            <button class="cc-btn" id="btnRecord" onclick="toggleRecording()" title="Record">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="10" r="3.5" fill="currentColor"/></svg>
+            </button>
+            <span class="cc-label">Record</span>
+          </div>
+          <div class="ctrl-group">
+            <button class="cc-btn" id="btnCaptions" onclick="toggleCaptions()" title="Captions">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="1" y="5" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 10h10M5 13.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+            <span class="cc-label">Captions</span>
+          </div>
+          <div class="ctrl-group">
+            <button class="cc-btn cc-end" onclick="endCall()" title="End call">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M2 12.5C3.5 8.5 7.5 6 10 6s6.5 2.5 8 6.5l-2.5 1.5-1.5-3c-.5.2-1.3.5-2 .5s-1.5-.5-2-.5-1.5.5-2 .5L6.5 14 2 12.5z" fill="white"/></svg>
+            </button>
+            <span class="cc-label" style="color:#E24B4A;">End</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
